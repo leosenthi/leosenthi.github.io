@@ -29,5 +29,22 @@
     "proximity": 300,
     "patternFunc": "/\\b(access key|api key|secret key|token|credential|authentication|login|azure key|github token|slack token|aws key|google key)[ :][^\\s]*\\b/i",
     "keywords": ["access key", "api key", "secret key", "token", "credential", "authentication", "login", "azure key", "github token", "slack token", "aws key", "google key"]
-  }
+  },
+  {
+  "name": "All Full Names",
+  "id": "a44669fe-0d48-453d-a9b1-2cc83f2cba77",
+  "patterns": [
+    {
+      "confidence": 85,
+      "idMatch": "Func_all_full_names"
+    },
+    {
+      "confidence": 65,
+      "idMatch": "Func_all_full_names_partial"
+    }
+  ],
+  "proximity": 300,
+  "patternFunc": "/\\b([A-Z][a-z]+\\s[A-Z][a-z]+|[A-Z]\\.\\s*[A-Z][a-z]+|[A-Z]\\.\\s*[A-Z]\\.\\s*[A-Z][a-z]+|Dr\\.\\s*[A-Z]\\.\\s*[A-Z][a-z]+|[A-Z][a-z]+,\\s*[A-Z]\\.\\s*[A-Z]\\.|[A-Z][a-z]+,\\s*[A-Z]\\.)(?:\\s*(Jr\\.|Sr\\.))?\\b/i",
+  "keywords": ["name", "given name", "family name", "surname", "full name"]
+}
 ]
