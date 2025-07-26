@@ -14,7 +14,10 @@
       }
     ],
     "proximity": 300,
-    "patternFunc": "/\\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\\d{2}-?\\d{4}-?\\d{1})\\b/",
+    "patternFunc": {
+      "source": "\\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\\d{2}-?\\d{4}-?\\d{1})\\b",
+      "flags": ""
+    },
     "keywords": ["aba number", "aba#", "aba", "abarouting#", "abaroutingnumber", "americanbankassociationrouting#", "americanbankassociationroutingnumber", "bankrouting#", "bankroutingnumber", "routing#", "routing no", "routing number", "routing transit number", "routing#", "RTN"]
   },
   {
@@ -27,7 +30,10 @@
       }
     ],
     "proximity": 300,
-    "patternFunc": "/\\b(?:(access|api|secret|auth|authentication|login|azure|github|slack|aws|google)[ -]?(key|token|credential|id|secret)[\\s:=-][A-Za-z0-9_\\-/+=]{8,64})\\b/i",
+    "patternFunc": {
+      "source": "\\b(?:(access|api|secret|auth|authentication|login|azure|github|slack|aws|google)[ -]?(key|token|credential|id|secret)[\\s:=-][A-Za-z0-9_\\-/+=]{8,64})\\b",
+      "flags": "i"
+    },
     "keywords": ["access key", "api key", "secret key", "token", "credential", "authentication", "login", "azure key", "github token", "slack token", "aws key", "google key", "access token", "auth token", "api secret", "credential id"]
   },
   {
@@ -44,33 +50,10 @@
       }
     ],
     "proximity": 300,
-    "patternFunc": "/\\b(?:[A-Z][a-zA-Z'-]+\\s+[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|Dr\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.\\s*[A-Z]\\.|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.)(?:\\s*(Jr\\.|Sr\\.|III|IV))?\\b/i",
+    "patternFunc": {
+      "source": "\\b(?:[A-Z][a-zA-Z'-]+\\s+[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|Dr\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.\\s*[A-Z]\\.|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.)(?:\\s*(Jr\\.|Sr\\.|III|IV))?\\b",
+      "flags": "i"
+    },
     "keywords": ["name", "given name", "family name", "surname", "full name", "first name", "last name", "person", "contact"]
-  },
-  {
-    "name": "All Email Addresses",
-    "id": "d4e5f6a7-b8c9-0d1e-f2a3-b4c5d6e7f8g9",
-    "patterns": [
-      {
-        "confidence": 85,
-        "idMatch": "Func_all_email_addresses"
-      }
-    ],
-    "proximity": 300,
-    "patternFunc": "/\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/",
-    "keywords": ["email", "email address", "contact email", "user email", "personal email"]
-  },
-  {
-  "name": "All IP Addresses",
-  "id": "b1c2d3e4-f5a6-7b8c-9d0e-f1a2b3c4d5e6",
-  "patterns": [
-    {
-      "confidence": 85,
-      "idMatch": "Func_all_ip_addresses"
-    }
-  ],
-  "proximity": 300,
-  "patternFunc": "/\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b/",
-  "keywords": ["ip address", "ipv4", "internet protocol", "network address", "ip"]
-}
+  }
 ]

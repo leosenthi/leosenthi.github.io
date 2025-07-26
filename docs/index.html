@@ -20,7 +20,7 @@
   <h1>DLP Prompt Analyzer (Microsoft Purview SITs)</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key" placeholder="e.g., aba number, confidential">
+    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key,access token,auth token,api secret,credential id,name,given name,family name,surname,full name,first name,last name,person,contact" placeholder="e.g., aba number, confidential">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
@@ -41,10 +41,18 @@
       try {
         const response = await fetch('sit_definitions.json'); // Replace with your JSON file URL
         sitDefinitions = await response.json();
-        // Convert patternFunc strings to RegExp objects
+        // Convert patternFunc to RegExp
         sitDefinitions = sitDefinitions.map(sit => ({
           ...sit,
-          patternFunc: (text) => text.match(new RegExp(sit.patternFunc.slice(1, -1), sit.patternFunc.includes('/i') ? 'i' : ''))
+          patternFunc: (text) => {
+            const regex = new RegExp(sit.patternFunc.source, sit.patternFunc.flags);
+            const matches = [];
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+              matches.push(match[0]); // Use full match
+            }
+            return matches.length ? matches : null;
+          }
         }));
         analyzePrompt(); // Re-analyze after loading
       } catch (error) {
