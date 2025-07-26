@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DLP Prompt Analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    function DLPanalyzer() {
+      const [prompt, setPrompt] = React.useState('');
+      const [sensitiveWords, setSensitiveWords] = React.useState('confidential,proprietary,financial,client,project,secret,password,SSN,credit card');
+      const [highlightedText, setHighlightedText] = React.useState('');
+
+      const analyzePrompt = () => {
+        const keywords = sensitiveWords.split(',').map(word => word.trim().toLowerCase());
+        const words = prompt.split(/\s+/);
+        const highlighted = words.map((word, index) => {
+          const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          return keywords.includes(cleanWord) ? 
+            `<span class="bg-red-200 text-red-800 font-bold">${word}</span>` : 
+            word;
+        }).join(' ');
+        setHighlightedText(highlighted);
+      };
+
+      React.useEffect(() => {
+        analyzePrompt();
+      }, [prompt, sensitiveWords]);
+
+      return (
+        <div className="max-w-2xl mx-auto p-4">
+          <h1 className="text-2xl font-bold mb-4">DLP Prompt Analyzer</h1>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Sensitive Keywords (comma-separated)</label>
+            <input
+              type="text"
+              value={sensitiveWords}
+              onChange={(e) => setSensitiveWords(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              placeholder="e.g., confidential, proprietary, financial"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">Your Prompt</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+              rows="4"
+              placeholder="Enter your prompt here..."
+            />
+          </div>
+          <div className="mt-4">
+            <h2 className="text-lg font-semibold">Analysis Result</h2>
+            <div 
+              className="p-2 border border-gray-200 rounded-md bg-gray-50"
+              dangerouslySetInnerHTML={{ __html: highlightedText || 'No text entered' }}
+            />
+          </div>
+          <p className="mt-2 text-sm text-gray-600">
+            Words highlighted in red may trigger DLP filters. Modify your prompt to use neutral terms.
+          </p>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<DLPanalyzer />, document.getElementById('root'));
+  </script>
+</body>
+</html>
