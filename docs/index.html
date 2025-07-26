@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DLP Prompt Analyzer</title>
+  <title>DLP Prompt Analyzer (Microsoft Purview SITs)</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
     h1 { font-size: 24px; margin-bottom: 20px; }
@@ -16,22 +16,58 @@
   </style>
 </head>
 <body>
-  <h1>DLP Prompt Analyzer</h1>
+  <h1>DLP Prompt Analyzer (Microsoft Purview SITs)</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="confidential,proprietary,financial,client,project,secret,password,SSN,credit card,bank account,driver's license,passport,health record,tax file number,personal,bank,account,card,security,social,insurance,medical,patient,diagnosis,treatment,medication,IBN,SWIFT,ABA,routing,personally identifiable information,PII,employee,contractor,vendor,trade secret,patent,copyright,intellectual property,non-disclosure,NDA,account number,login,credential,authentication,private,classified,restricted,internal,executive,HR,human resources,salary,payroll,invoice,contract,agreement" placeholder="e.g., confidential, proprietary, financial">
+    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,confidential,proprietary,financial,client,project,secret,password,SSN,credit card" placeholder="e.g., aba number, confidential">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
     <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
   </div>
   <div class="result" id="result">No text entered</div>
-  <p class="info">Words highlighted in red may trigger Microsoft Defender DLP filters. Modify your prompt to use neutral terms. Source: Microsoft Purview SITs</p>[](https://learn.microsoft.com/en-us/purview/sit-sensitive-information-type-learn-about)
+  <p class="info">Words or patterns highlighted in red may trigger Microsoft Purview DLP filters (low: ≤65, medium: 75, high: 85 confidence). Source: <a href="https://learn.microsoft.com/en-us/purview/sit-sensitive-information-type-entity-definitions">Microsoft Purview SIT Definitions</a></p>
 
   <script>
     const keywordsInput = document.getElementById('keywords');
     const promptInput = document.getElementById('prompt');
     const resultDiv = document.getElementById('result');
+
+    // SIT logic based on XML definitions
+    const sitDefinitions = [
+      {
+        name: 'ABA Routing Number',
+        id: 'cb353f78-2b72-4c3c-8827-92ebe4f69fdf',
+        patterns: [
+          {
+            confidence: 75,
+            idMatch: 'Func_aba_routing',
+            match: 'Keyword_ABA_Routing'
+          },
+          {
+            confidence: 65,
+            idMatch: 'Func_aba_routing'
+          }
+        ],
+        proximity: 300,
+        // Approximate Func_aba_routing: 9 digits, first two in 00-12, 21-32, 61-72, or 80
+        patternFunc: (text) => {
+          const regex = /\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\d{2}-?\d{4}-?\d{1})\b/;
+          return text.match(regex);
+        },
+        keywords: ['aba number', 'aba#', 'aba', 'abarouting#', 'abaroutingnumber', 'americanbankassociationrouting#', 'americanbankassociationroutingnumber', 'bankrouting#', 'bankroutingnumber', 'routing#', 'routing no', 'routing number', 'routing transit number', 'routing#', 'RTN']
+      }
+      // Add more SITs here by parsing their XML from Microsoft documentation
+    ];
+
+    function checkProximity(text, match, keywords, proximity) {
+      const matchIndex = text.indexOf(match);
+      if (matchIndex === -1) return false;
+      const start = Math.max(0, matchIndex - proximity);
+      const end = Math.min(text.length, matchIndex + match.length + proximity);
+      const nearbyText = text.slice(start, end).toLowerCase();
+      return keywords.some(keyword => nearbyText.includes(keyword.toLowerCase()));
+    }
 
     function analyzePrompt() {
       const keywords = keywordsInput.value.split(',').map(word => word.trim().toLowerCase());
@@ -40,12 +76,34 @@
         resultDiv.innerHTML = 'No text entered';
         return;
       }
+
+      let highlighted = prompt;
+
+      // Keyword-based highlighting
       const words = prompt.split(/\s+/);
-      const highlighted = words.map(word => {
+      highlighted = words.map(word => {
         const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
         return keywords.includes(cleanWord) ? `<span class="highlight">${word}</span>` : word;
       }).join(' ');
-      resultDiv.innerHTML = highlighted;
+
+      // SIT pattern and proximity-based matching
+      sitDefinitions.forEach(sit => {
+        const matches = sit.patternFunc(prompt);
+        if (matches) {
+          matches.forEach(match => {
+            let confidence = sit.patterns[1].confidence; // Default to low confidence
+            if (checkProximity(prompt, match, sit.keywords, sit.proximity)) {
+              confidence = sit.patterns[0].confidence; // Medium confidence with keyword
+            }
+            highlighted = highlighted.replace(
+              match,
+              `<span class="highlight">${match} (${sit.name}, Confidence: ${confidence})</span>`
+            );
+          });
+        }
+      });
+
+      resultDiv.innerHTML = highlighted || 'No text entered';
     }
 
     keywordsInput.addEventListener('input', analyzePrompt);
