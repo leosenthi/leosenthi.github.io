@@ -19,14 +19,14 @@
   <h1>DLP Prompt Analyzer</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="confidential,proprietary,financial,client,project,secret,password,SSN,credit card" placeholder="e.g., confidential, proprietary, financial">
+    <input type="text" id="keywords" value="confidential,proprietary,financial,client,project,secret,password,SSN,credit card,bank account,driver's license,passport,health record,tax file number,personal,bank,account,card,security,social,insurance,medical,patient,diagnosis,treatment,medication,IBN,SWIFT,ABA,routing,personally identifiable information,PII,employee,contractor,vendor,trade secret,patent,copyright,intellectual property,non-disclosure,NDA,account number,login,credential,authentication,private,classified,restricted,internal,executive,HR,human resources,salary,payroll,invoice,contract,agreement" placeholder="e.g., confidential, proprietary, financial">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
     <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
   </div>
   <div class="result" id="result">No text entered</div>
-  <p class="info">Words highlighted in red may trigger DLP filters. Modify your prompt to use neutral terms.</p>
+  <p class="info">Words highlighted in red may trigger Microsoft Defender DLP filters. Modify your prompt to use neutral terms. Source: Microsoft Purview SITs</p>[](https://learn.microsoft.com/en-us/purview/sit-sensitive-information-type-learn-about)
 
   <script>
     const keywordsInput = document.getElementById('keywords');
