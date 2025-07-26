@@ -19,7 +19,7 @@
   <h1>DLP Prompt Analyzer (Microsoft Purview SITs)</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,confidential,proprietary,financial,client,project,secret,password,SSN,credit card" placeholder="e.g., aba number, confidential">
+    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,confidential,proprietary,financial,client,project,secret,password,SSN,credit card,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key" placeholder="e.g., aba number, confidential">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
@@ -50,14 +50,28 @@
           }
         ],
         proximity: 300,
-        // Approximate Func_aba_routing: 9 digits, first two in 00-12, 21-32, 61-72, or 80
         patternFunc: (text) => {
           const regex = /\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\d{2}-?\d{4}-?\d{1})\b/;
           return text.match(regex);
         },
         keywords: ['aba number', 'aba#', 'aba', 'abarouting#', 'abaroutingnumber', 'americanbankassociationrouting#', 'americanbankassociationroutingnumber', 'bankrouting#', 'bankroutingnumber', 'routing#', 'routing no', 'routing number', 'routing transit number', 'routing#', 'RTN']
+      },
+      {
+        name: 'All Credentials',
+        id: 'faca2c7e-4a84-4a83-a6cd-93b3e3fa7666',
+        patterns: [
+          {
+            confidence: 85,
+            idMatch: 'Func_all_credentials'
+          }
+        ],
+        proximity: 300,
+        patternFunc: (text) => {
+          const regex = /\b(access key|api key|secret key|token|credential|authentication|login|azure key|github token|slack token|aws key|google key)[ :][^\s]*\b/i;
+          return text.match(regex);
+        },
+        keywords: ['access key', 'api key', 'secret key', 'token', 'credential', 'authentication', 'login', 'azure key', 'github token', 'slack token', 'aws key', 'google key']
       }
-      // Add more SITs here by parsing their XML from Microsoft documentation
     ];
 
     function checkProximity(text, match, keywords, proximity) {
@@ -91,9 +105,9 @@
         const matches = sit.patternFunc(prompt);
         if (matches) {
           matches.forEach(match => {
-            let confidence = sit.patterns[1].confidence; // Default to low confidence
-            if (checkProximity(prompt, match, sit.keywords, sit.proximity)) {
-              confidence = sit.patterns[0].confidence; // Medium confidence with keyword
+            let confidence = sit.patterns[0].confidence;
+            if (sit.patterns[0].match && !checkProximity(prompt, match, sit.keywords, sit.proximity)) {
+              confidence = sit.patterns[1]?.confidence || confidence;
             }
             highlighted = highlighted.replace(
               match,
