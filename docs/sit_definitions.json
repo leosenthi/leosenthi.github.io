@@ -15,7 +15,7 @@
     ],
     "proximity": 300,
     "patternFunc": {
-      "source": "\\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\\d{2}-?\\d{4}-?\\d{1})\\b",
+      "source": "\\b((?:0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\\d{2}-?\\d{4}-?\\d{1})\\b",
       "flags": ""
     },
     "keywords": ["aba number", "aba#", "aba", "abarouting#", "abaroutingnumber", "americanbankassociationrouting#", "americanbankassociationroutingnumber", "bankrouting#", "bankroutingnumber", "routing#", "routing no", "routing number", "routing transit number", "routing#", "RTN"]
@@ -31,7 +31,7 @@
     ],
     "proximity": 300,
     "patternFunc": {
-      "source": "\\b(?:(access|api|secret|auth|authentication|login|azure|github|slack|aws|google)[ -]?(key|token|credential|id|secret)[\\s:=-][A-Za-z0-9_\\-/+=]{8,64})\\b",
+      "source": "\\b(?:access|api|secret|auth|authentication|login|azure|github|slack|aws|google)(?:[- ]?(?:key|token|credential|id|secret))[:=][A-Za-z0-9_\\-/+=]{8,32}\\b",
       "flags": "i"
     },
     "keywords": ["access key", "api key", "secret key", "token", "credential", "authentication", "login", "azure key", "github token", "slack token", "aws key", "google key", "access token", "auth token", "api secret", "credential id"]
@@ -51,7 +51,7 @@
     ],
     "proximity": 300,
     "patternFunc": {
-      "source": "\\b(?:[A-Z][a-zA-Z'-]+\\s+[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z]\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|Dr\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]+|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.\\s*[A-Z]\\.|[A-Z][a-zA-Z'-]+,\\s*[A-Z]\\.)(?:\\s*(Jr\\.|Sr\\.|III|IV))?\\b",
+      "source": "\\b(?:[A-Z][a-zA-Z'-]{1,15}\\s+[A-Z][a-zA-Z'-]{1,15}|[A-Z]\\.\\s*[A-Z][a-zA-Z'-]{1,15}|[A-Z]\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]{1,15}|Dr\\.\\s*[A-Z]\\.\\s*[A-Z][a-zA-Z'-]{1,15}|[A-Z][a-zA-Z'-]{1,15},\\s*[A-Z]\\.)(?:\\s*(?:Jr\\.|Sr\\.|III|IV))?\\b",
       "flags": "i"
     },
     "keywords": ["name", "given name", "family name", "surname", "full name", "first name", "last name", "person", "contact"]

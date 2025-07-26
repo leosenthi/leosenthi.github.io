@@ -24,7 +24,7 @@
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
-    <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
+    <textarea id="prompt" placeholder="Enter your prompt here..." maxlength="10000"></textarea>
   </div>
   <div class="result" id="result">No text entered</div>
   <p class="info">Words or patterns highlighted in red may trigger Microsoft Purview DLP filters (low: ≤65, medium: 75, high: 85 confidence). Source: <a href="https://learn.microsoft.com/en-us/purview/sit-sensitive-information-type-entity-definitions">Microsoft Purview SIT Definitions</a></p>
@@ -33,28 +33,23 @@
     const keywordsInput = document.getElementById('keywords');
     const promptInput = document.getElementById('prompt');
     const resultDiv = document.getElementById('result');
+    const MAX_MATCHES = 100; // Limit number of matches to prevent memory issues
 
-    // Load SIT definitions dynamically
     let sitDefinitions = [];
 
     async function loadSitDefinitions() {
       try {
-        const response = await fetch('sit_definitions.json'); // Replace with your JSON file URL
+        const response = await fetch('sit_definitions.json');
         sitDefinitions = await response.json();
-        // Convert patternFunc to RegExp
         sitDefinitions = sitDefinitions.map(sit => ({
           ...sit,
           patternFunc: (text) => {
             const regex = new RegExp(sit.patternFunc.source, sit.patternFunc.flags);
-            const matches = [];
-            let match;
-            while ((match = regex.exec(text)) !== null) {
-              matches.push(match[0]); // Use full match
-            }
+            const matches = [...text.matchAll(regex)].map(m => m[0]).slice(0, MAX_MATCHES);
             return matches.length ? matches : null;
           }
         }));
-        analyzePrompt(); // Re-analyze after loading
+        analyzePrompt();
       } catch (error) {
         resultDiv.innerHTML = `<span class="error">Error loading SIT definitions: ${error.message}</span>`;
       }
@@ -76,17 +71,18 @@
         resultDiv.innerHTML = 'No text entered';
         return;
       }
+      if (prompt.length > 10000) {
+        resultDiv.innerHTML = '<span class="error">Input too large, please shorten the prompt (max 10,000 characters).</span>';
+        return;
+      }
 
       let highlighted = prompt;
 
-      // Keyword-based highlighting
-      const words = prompt.split(/\s+/);
-      highlighted = words.map(word => {
-        const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        return keywords.includes(cleanWord) ? `<span class="highlight">${word}</span>` : word;
-      }).join(' ');
+      // Keyword-based highlighting (single pass)
+      const keywordRegex = new RegExp(`\\b(${keywords.map(word => word.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).join('|')})\\b`, 'gi');
+      highlighted = highlighted.replace(keywordRegex, '<span class="highlight">$1</span>');
 
-      // SIT pattern and proximity-based matching
+      // SIT pattern matching
       sitDefinitions.forEach(sit => {
         const matches = sit.patternFunc(prompt);
         if (matches) {
@@ -95,8 +91,9 @@
             if (sit.patterns[0].match && !checkProximity(prompt, match, sit.keywords, sit.proximity)) {
               confidence = sit.patterns[1]?.confidence || confidence;
             }
+            const escapedMatch = match.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
             highlighted = highlighted.replace(
-              match,
+              new RegExp(`\\b${escapedMatch}\\b`, 'g'),
               `<span class="highlight">${match} (${sit.name}, Confidence: ${confidence})</span>`
             );
           });
@@ -108,7 +105,7 @@
 
     keywordsInput.addEventListener('input', analyzePrompt);
     promptInput.addEventListener('input', analyzePrompt);
-    loadSitDefinitions(); // Load SIT definitions on page load
+    loadSitDefinitions();
   </script>
 </body>
 </html>
