@@ -13,18 +13,17 @@
     .result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
     .highlight { background: #fee2e2; color: #991b1b; font-weight: bold; }
     .info { margin-top: 10px; font-size: 12px; color: #666; }
-    .error { color: red; }
   </style>
 </head>
 <body>
   <h1>DLP Prompt Analyzer (Microsoft Purview SITs)</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key,access token,auth token,api secret,credential id,name,given name,family name,surname,full name,first name,last name,person,contact" placeholder="e.g., aba number, confidential">
+    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,confidential,proprietary,financial,client,project,secret,password,SSN,credit card,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key" placeholder="e.g., aba number, confidential">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
-    <textarea id="prompt" placeholder="Enter your prompt here..." maxlength="10000"></textarea>
+    <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
   </div>
   <div class="result" id="result">No text entered</div>
   <p class="info">Words or patterns highlighted in red may trigger Microsoft Purview DLP filters (low: ≤65, medium: 75, high: 85 confidence). Source: <a href="https://learn.microsoft.com/en-us/purview/sit-sensitive-information-type-entity-definitions">Microsoft Purview SIT Definitions</a></p>
@@ -33,27 +32,47 @@
     const keywordsInput = document.getElementById('keywords');
     const promptInput = document.getElementById('prompt');
     const resultDiv = document.getElementById('result');
-    const MAX_MATCHES = 100; // Limit number of matches to prevent memory issues
 
-    let sitDefinitions = [];
-
-    async function loadSitDefinitions() {
-      try {
-        const response = await fetch('sit_definitions.json');
-        sitDefinitions = await response.json();
-        sitDefinitions = sitDefinitions.map(sit => ({
-          ...sit,
-          patternFunc: (text) => {
-            const regex = new RegExp(sit.patternFunc.source, sit.patternFunc.flags);
-            const matches = [...text.matchAll(regex)].map(m => m[0]).slice(0, MAX_MATCHES);
-            return matches.length ? matches : null;
+    // SIT logic based on XML definitions
+    const sitDefinitions = [
+      {
+        name: 'ABA Routing Number',
+        id: 'cb353f78-2b72-4c3c-8827-92ebe4f69fdf',
+        patterns: [
+          {
+            confidence: 75,
+            idMatch: 'Func_aba_routing',
+            match: 'Keyword_ABA_Routing'
+          },
+          {
+            confidence: 65,
+            idMatch: 'Func_aba_routing'
           }
-        }));
-        analyzePrompt();
-      } catch (error) {
-        resultDiv.innerHTML = `<span class="error">Error loading SIT definitions: ${error.message}</span>`;
+        ],
+        proximity: 300,
+        patternFunc: (text) => {
+          const regex = /\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\d{2}-?\d{4}-?\d{1})\b/;
+          return text.match(regex);
+        },
+        keywords: ['aba number', 'aba#', 'aba', 'abarouting#', 'abaroutingnumber', 'americanbankassociationrouting#', 'americanbankassociationroutingnumber', 'bankrouting#', 'bankroutingnumber', 'routing#', 'routing no', 'routing number', 'routing transit number', 'routing#', 'RTN']
+      },
+      {
+        name: 'All Credentials',
+        id: 'faca2c7e-4a84-4a83-a6cd-93b3e3fa7666',
+        patterns: [
+          {
+            confidence: 85,
+            idMatch: 'Func_all_credentials'
+          }
+        ],
+        proximity: 300,
+        patternFunc: (text) => {
+          const regex = /\b(access key|api key|secret key|token|credential|authentication|login|azure key|github token|slack token|aws key|google key)[ :][^\s]*\b/i;
+          return text.match(regex);
+        },
+        keywords: ['access key', 'api key', 'secret key', 'token', 'credential', 'authentication', 'login', 'azure key', 'github token', 'slack token', 'aws key', 'google key']
       }
-    }
+    ];
 
     function checkProximity(text, match, keywords, proximity) {
       const matchIndex = text.indexOf(match);
@@ -71,18 +90,17 @@
         resultDiv.innerHTML = 'No text entered';
         return;
       }
-      if (prompt.length > 10000) {
-        resultDiv.innerHTML = '<span class="error">Input too large, please shorten the prompt (max 10,000 characters).</span>';
-        return;
-      }
 
       let highlighted = prompt;
 
-      // Keyword-based highlighting (single pass)
-      const keywordRegex = new RegExp(`\\b(${keywords.map(word => word.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')).join('|')})\\b`, 'gi');
-      highlighted = highlighted.replace(keywordRegex, '<span class="highlight">$1</span>');
+      // Keyword-based highlighting
+      const words = prompt.split(/\s+/);
+      highlighted = words.map(word => {
+        const cleanWord = word.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        return keywords.includes(cleanWord) ? `<span class="highlight">${word}</span>` : word;
+      }).join(' ');
 
-      // SIT pattern matching
+      // SIT pattern and proximity-based matching
       sitDefinitions.forEach(sit => {
         const matches = sit.patternFunc(prompt);
         if (matches) {
@@ -91,9 +109,8 @@
             if (sit.patterns[0].match && !checkProximity(prompt, match, sit.keywords, sit.proximity)) {
               confidence = sit.patterns[1]?.confidence || confidence;
             }
-            const escapedMatch = match.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
             highlighted = highlighted.replace(
-              new RegExp(`\\b${escapedMatch}\\b`, 'g'),
+              match,
               `<span class="highlight">${match} (${sit.name}, Confidence: ${confidence})</span>`
             );
           });
@@ -105,7 +122,6 @@
 
     keywordsInput.addEventListener('input', analyzePrompt);
     promptInput.addEventListener('input', analyzePrompt);
-    loadSitDefinitions();
   </script>
 </body>
 </html>
