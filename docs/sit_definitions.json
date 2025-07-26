@@ -1,0 +1,33 @@
+[
+  {
+    "name": "ABA Routing Number",
+    "id": "cb353f78-2b72-4c3c-8827-92ebe4f69fdf",
+    "patterns": [
+      {
+        "confidence": 75,
+        "idMatch": "Func_aba_routing",
+        "match": "Keyword_ABA_Routing"
+      },
+      {
+        "confidence": 65,
+        "idMatch": "Func_aba_routing"
+      }
+    ],
+    "proximity": 300,
+    "patternFunc": "/\\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\\d{2}-?\\d{4}-?\\d{1})\\b/",
+    "keywords": ["aba number", "aba#", "aba", "abarouting#", "abaroutingnumber", "americanbankassociationrouting#", "americanbankassociationroutingnumber", "bankrouting#", "bankroutingnumber", "routing#", "routing no", "routing number", "routing transit number", "routing#", "RTN"]
+  },
+  {
+    "name": "All Credentials",
+    "id": "faca2c7e-4a84-4a83-a6cd-93b3e3fa7666",
+    "patterns": [
+      {
+        "confidence": 85,
+        "idMatch": "Func_all_credentials"
+      }
+    ],
+    "proximity": 300,
+    "patternFunc": "/\\b(access key|api key|secret key|token|credential|authentication|login|azure key|github token|slack token|aws key|google key)[ :][^\\s]*\\b/i",
+    "keywords": ["access key", "api key", "secret key", "token", "credential", "authentication", "login", "azure key", "github token", "slack token", "aws key", "google key"]
+  }
+]

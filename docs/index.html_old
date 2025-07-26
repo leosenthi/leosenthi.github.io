@@ -13,14 +13,13 @@
     .result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
     .highlight { background: #fee2e2; color: #991b1b; font-weight: bold; }
     .info { margin-top: 10px; font-size: 12px; color: #666; }
-    .error { color: red; }
   </style>
 </head>
 <body>
   <h1>DLP Prompt Analyzer (Microsoft Purview SITs)</h1>
   <div>
     <label for="keywords">Sensitive Keywords (comma-separated)</label>
-    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key" placeholder="e.g., aba number, confidential">
+    <input type="text" id="keywords" value="aba number,aba#,aba,abarouting#,abaroutingnumber,americanbankassociationrouting#,americanbankassociationroutingnumber,bankrouting#,bankroutingnumber,routing#,routing no,routing number,routing transit number,routing#,RTN,confidential,proprietary,financial,client,project,secret,password,SSN,credit card,access key,api key,secret key,token,credential,authentication,login,azure key,github token,slack token,aws key,google key" placeholder="e.g., aba number, confidential">
   </div>
   <div style="margin-top: 15px;">
     <label for="prompt">Your Prompt</label>
@@ -34,23 +33,46 @@
     const promptInput = document.getElementById('prompt');
     const resultDiv = document.getElementById('result');
 
-    // Load SIT definitions dynamically
-    let sitDefinitions = [];
-
-    async function loadSitDefinitions() {
-      try {
-        const response = await fetch('sit_definitions.json'); // Replace with your JSON file URL
-        sitDefinitions = await response.json();
-        // Convert patternFunc strings to RegExp objects
-        sitDefinitions = sitDefinitions.map(sit => ({
-          ...sit,
-          patternFunc: (text) => text.match(new RegExp(sit.patternFunc.slice(1, -1), sit.patternFunc.includes('/i') ? 'i' : ''))
-        }));
-        analyzePrompt(); // Re-analyze after loading
-      } catch (error) {
-        resultDiv.innerHTML = `<span class="error">Error loading SIT definitions: ${error.message}</span>`;
+    // SIT logic based on XML definitions
+    const sitDefinitions = [
+      {
+        name: 'ABA Routing Number',
+        id: 'cb353f78-2b72-4c3c-8827-92ebe4f69fdf',
+        patterns: [
+          {
+            confidence: 75,
+            idMatch: 'Func_aba_routing',
+            match: 'Keyword_ABA_Routing'
+          },
+          {
+            confidence: 65,
+            idMatch: 'Func_aba_routing'
+          }
+        ],
+        proximity: 300,
+        patternFunc: (text) => {
+          const regex = /\b((0[0-9]|1[0-2]|2[1-9]|3[0-2]|6[1-7]|80)\d{2}-?\d{4}-?\d{1})\b/;
+          return text.match(regex);
+        },
+        keywords: ['aba number', 'aba#', 'aba', 'abarouting#', 'abaroutingnumber', 'americanbankassociationrouting#', 'americanbankassociationroutingnumber', 'bankrouting#', 'bankroutingnumber', 'routing#', 'routing no', 'routing number', 'routing transit number', 'routing#', 'RTN']
+      },
+      {
+        name: 'All Credentials',
+        id: 'faca2c7e-4a84-4a83-a6cd-93b3e3fa7666',
+        patterns: [
+          {
+            confidence: 85,
+            idMatch: 'Func_all_credentials'
+          }
+        ],
+        proximity: 300,
+        patternFunc: (text) => {
+          const regex = /\b(access key|api key|secret key|token|credential|authentication|login|azure key|github token|slack token|aws key|google key)[ :][^\s]*\b/i;
+          return text.match(regex);
+        },
+        keywords: ['access key', 'api key', 'secret key', 'token', 'credential', 'authentication', 'login', 'azure key', 'github token', 'slack token', 'aws key', 'google key']
       }
-    }
+    ];
 
     function checkProximity(text, match, keywords, proximity) {
       const matchIndex = text.indexOf(match);
@@ -100,7 +122,6 @@
 
     keywordsInput.addEventListener('input', analyzePrompt);
     promptInput.addEventListener('input', analyzePrompt);
-    loadSitDefinitions(); // Load SIT definitions on page load
   </script>
 </body>
 </html>
